@@ -31,10 +31,18 @@ const LayoutProfesional = ({ children, usuario, onCerrarSesion, paginaActual, on
         </div>
 
         <div className="header-centro">
-          <div className="logo-header">
-            <div className="logo-img">🧠</div>
+          <a 
+            href="#" 
+            onClick={(e) => { e.preventDefault(); onCambiarPagina('directorio'); }} 
+            className="logo-header-link"
+          >
+            <img 
+              src="/LogoNeurometrica500px.png"
+              alt="Logo NeuroMétrica" 
+              className="logo-img" 
+            />
             <span className="logo-texto">NeuroMétrica</span>
-          </div>
+          </a>
         </div>
 
         <div className="header-derecha">
@@ -192,7 +200,7 @@ const PantallaAuth = ({ onLogin }) => {
     <div className="pantalla-auth">
       <div className="auth-container">
         <div className="auth-logo">
-          <img src="/Logo500px.png" alt="Logo Sistema CSI" />
+          <img src="/Logo500pxV2.png" alt="Logo Sistema CSI" />
         </div>
         
         <h1>NeuroMétrica</h1>
@@ -292,7 +300,7 @@ const PantallaDashboard = ({ onCambiarPagina, usuario }) => {
 
   return (
     <div className="contenido-pagina">
-      <h1>Bienvenido {nombreCapitalizado}</h1>
+      <h1>¡Bienvenido {nombreCapitalizado}!</h1>
       <p className="pagina-descripcion">
         Tu desarrollo empieza aquí: conoce quién eres y qué puedes lograr
       </p>
@@ -330,7 +338,7 @@ const PantallaDashboard = ({ onCambiarPagina, usuario }) => {
         {infoExpandida && (
           <div className="info-contenido">
             <p>
-              NeuroMétrica es una plataforma de evaluación psicológica y psicométrica diseñada para ayudar a las personas a conocer su perfil personal y profesional. Los usuarios pueden realizar distintos tests para descubrir fortalezas, habilidades y áreas de mejora, mientras que las empresas pueden acceder a perfiles completos para tomar decisiones informadas sobre selección de talento y desarrollo de equipos.
+              NeuroMétrica es una plataforma de evaluación psicológica y psicométrica diseñada para ayudar a las personas a conocer su perfil personal y profesional. Los usuarios pueden realizar distintos test para descubrir fortalezas, habilidades y áreas de mejora, mientras que las empresas pueden acceder a perfiles completos para tomar decisiones informadas sobre selección de talento y desarrollo de equipos.
             </p>
             <p>
               Creemos en el valor de conocer tus capacidades y tu potencial para crecer de manera consciente y efectiva. Nuestros resultados son claros y confiables, buscando apoyar el crecimiento y desarrollo de cada persona.
@@ -782,7 +790,7 @@ const PantallaResultados = ({ token, testId, onVolver }) => {
         <h2>Error</h2>
         <p className="mensaje">{error}</p>
         <button onClick={onVolver} className="btn-primary">
-          Volver al Dashboard
+          Volver a Inicio
         </button>
       </div>
     );
@@ -1003,7 +1011,7 @@ const PantallaHistorial = ({ token, onVolver, onVerResultado }) => {
         <h2>Error</h2>
         <p className="mensaje">{error}</p>
         <button onClick={onVolver} className="btn-primary">
-          Volver al Dashboard
+          Volver a Inicio
         </button>
       </div>
     );

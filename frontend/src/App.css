@@ -201,22 +201,29 @@ body {
   justify-content: center;
 }
 
-/* Logo en el header */
-.logo-header {
+/* Contenedor clicable del logo */
+.logo-header-link {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap:5px;
+  text-decoration: none; /* Quita el subrayado del enlace */
   color: white;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.logo-header-link:hover {
+  opacity: 0.85; /* Efecto hover sutil */
 }
 
 .logo-img {
-  height: 32px; /* Usando el tamaño de tu logo */
-  width: auto;
-  filter: brightness(0) invert(1); /* Convierte el logo a blanco */
+  vertical-align: middle;
+  max-width: 19px;
+  object-fit: contain;
 }
 
 .logo-texto {
-  font-size: 1.3rem;
+  font-size: 16px;
   font-weight: 700;
   color: white;
   white-space: nowrap;
@@ -246,7 +253,7 @@ body {
 .menu-toggle {
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 16px;
   cursor: pointer;
   color: #666;
   padding: 10px;
