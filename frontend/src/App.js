@@ -5,35 +5,84 @@ import './App.css';
 const API_URL = 'https://neurometrica-backend.onrender.com';
 
 // ============================================
-// COMPONENTE: LAYOUT PROFESIONAL (con sidebar)
+// UTILIDADES
 // ============================================
-const LayoutProfesional = ({ children, usuario, onCerrarSesion, paginaActual, onCambiarPagina }) => {
+const capitalizarPrimeraLetra = (texto) => {
+  if (!texto) return '';
+  return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+};
+
+const formatearFecha = (fecha, opciones) => {
+  return new Date(fecha).toLocaleDateString('es-MX', opciones);
+};
+
+const manejarErrores = (data) => {
+  if (typeof data.detail === 'string') {
+    return data.detail;
+  }
+  if (Array.isArray(data.detail)) {
+    return data.detail.map(error => {
+      if (error.msg?.includes('valid email address') || 
+          error.msg?.includes('email') || 
+          error.msg?.includes('@')) {
+        return 'Ingresa un correo electrónico válido';
+      }
+      return error.msg;
+    }).join(', ');
+  }
+  if (data.detail && typeof data.detail === 'object') {
+    return data.detail.msg || 'Error de validación';
+  }
+  return 'Error en el servidor';
+};
+
+// ============================================
+// COMPONENTE: LAYOUT PROFESIONAL
+// ============================================
+const LayoutProfesional = ({ children, usuario, onCerrarSesion, onCambiarPagina }) => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [perfilMenuAbierto, setPerfilMenuAbierto] = useState(false);
 
+  const cerrarMenus = () => {
+    setMenuAbierto(false);
+    setPerfilMenuAbierto(false);
+  };
+
+  const navegarA = (pagina) => {
+    onCambiarPagina(pagina);
+    cerrarMenus();
+  };
+
+  const opcionesMenu = [
+    { id: 'dashboard', icono: '🏠', texto: 'Inicio' },
+    { id: 'directorio', icono: '🔍', texto: 'Directorio de Psicólogos' },
+    { id: 'empresa', icono: '🏢', texto: 'Regístrate como Empresa' },
+    { id: 'cursos', icono: '📚', texto: 'Cursos' }
+  ];
+
   return (
     <div className="layout-profesional">
-      {/* Header fijo */}
+      {/* Header */}
       <header className="header-profesional">
         <div className="header-izquierda">
-          <button 
-            className="menu-hamburguesa"
-            onClick={() => setMenuAbierto(!menuAbierto)}
-          >
-            {/* Contenedor para las líneas */}
-            <div className="hamburguesa-icono">
-              <span className="hamburguesa-lineas"></span>
-              <span className="hamburguesa-lineas"></span>
-              <span className="hamburguesa-lineas"></span>
-            </div>
-            <span className="hamburguesa-texto">Menú</span>
-          </button>
-        </div>
+        <button 
+          className={`menu-hamburguesa ${menuAbierto ? 'abierto' : ''}`}
+          onClick={() => setMenuAbierto(!menuAbierto)}
+          aria-labelledby="toggle-label"
+        >
+          <div className="hamburguesa-icono">
+            <span className="hamburguesa-lineas"></span>
+            <span className="hamburguesa-lineas"></span>
+            <span className="hamburguesa-lineas"></span>
+          </div>
+          <span id="toggle-label" className="hamburguesa-texto">Menú</span>
+        </button>
+      </div>
 
         <div className="header-centro">
           <a 
             href="#" 
-            onClick={(e) => { e.preventDefault(); onCambiarPagina('directorio'); }} 
+            onClick={(e) => { e.preventDefault(); navegarA('directorio'); }} 
             className="logo-header-link"
           >
             <img 
@@ -49,6 +98,7 @@ const LayoutProfesional = ({ children, usuario, onCerrarSesion, paginaActual, on
           <button 
             className="perfil-dropdown-toggle"
             onClick={() => setPerfilMenuAbierto(!perfilMenuAbierto)}
+            aria-label="Perfil de usuario"
           >
             <div className="perfil-avatar">
               {usuario?.nombre?.charAt(0).toUpperCase()}
@@ -56,7 +106,7 @@ const LayoutProfesional = ({ children, usuario, onCerrarSesion, paginaActual, on
           </button>
           {perfilMenuAbierto && (
             <div className="perfil-dropdown-menu">
-              <button onClick={() => { onCambiarPagina('perfil'); setPerfilMenuAbierto(false); }}>
+              <button onClick={() => navegarA('perfil')}>
                 <span>👤</span> Mi Perfil
               </button>
               <button onClick={onCerrarSesion}>
@@ -69,34 +119,34 @@ const LayoutProfesional = ({ children, usuario, onCerrarSesion, paginaActual, on
 
       <div className="contenedor-principal">
         {/* Sidebar */}
-        <aside className={`sidebar-overlay ${menuAbierto ? 'visible' : ''}`} onClick={() => setMenuAbierto(false)}>
-          <div className={`sidebar-nuevo ${menuAbierto ? 'abierto' : ''}`} onClick={(e) => e.stopPropagation()}>
+        <aside 
+          className={`sidebar-overlay ${menuAbierto ? 'visible' : ''}`} 
+          onClick={cerrarMenus}
+        >
+          <div 
+            className={`sidebar-nuevo ${menuAbierto ? 'abierto' : ''}`} 
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="sidebar-header-logo">
               <img src="/Logo500px.png" alt="Logo" className="sidebar-logo-img" />
               <span className="sidebar-logo-texto">NeuroMétrica</span>
             </div>
             <nav className="sidebar-nav">
-              <button className="sidebar-item" onClick={() => { onCambiarPagina('dashboard'); setMenuAbierto(false); }}>
-                <span className="sidebar-icono">🏠</span>
-                <span className="sidebar-texto">Inicio</span>
-              </button>
-              <button className="sidebar-item" onClick={() => { onCambiarPagina('directorio'); setMenuAbierto(false); }}>
-                <span className="sidebar-icono">🔍</span>
-                <span className="sidebar-texto">Directorio de Psicólogos</span>
-              </button>
-              <button className="sidebar-item" onClick={() => { onCambiarPagina('empresa'); setMenuAbierto(false); }}>
-                <span className="sidebar-icono">🏢</span>
-                <span className="sidebar-texto">Regístrate como Empresa</span>
-              </button>
-              <button className="sidebar-item" onClick={() => { onCambiarPagina('cursos'); setMenuAbierto(false); }}>
-                <span className="sidebar-icono">📚</span>
-                <span className="sidebar-texto">Cursos</span>
-              </button>
+              {opcionesMenu.map(opcion => (
+                <button 
+                  key={opcion.id}
+                  className="sidebar-item" 
+                  onClick={() => navegarA(opcion.id)}
+                >
+                  <span className="sidebar-icono">{opcion.icono}</span>
+                  <span className="sidebar-texto">{opcion.texto}</span>
+                </button>
+              ))}
             </nav>
           </div>
         </aside>
 
-        {/* Área de contenido */}
+        {/* Contenido */}
         <main className="contenido-principal">
           {children}
         </main>
@@ -111,10 +161,10 @@ const LayoutProfesional = ({ children, usuario, onCerrarSesion, paginaActual, on
 };
 
 // ============================================
-// PANTALLA: LOGIN/REGISTRO (sin layout)
+// COMPONENTE: AUTENTICACIÓN
 // ============================================
 const PantallaAuth = ({ onLogin }) => {
-  const [modo, setModo] = useState('login'); // 'login' o 'registro'
+  const [modo, setModo] = useState('login');
   const [formData, setFormData] = useState({
     nombre: '',
     primerApellido: '',
@@ -126,81 +176,59 @@ const PantallaAuth = ({ onLogin }) => {
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
 
-  const capitalizarPrimeraLetra = (texto) => {
-  if (!texto) return '';
-  return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
-};
+  const actualizarCampo = (campo, valor) => {
+    const valorProcesado = ['nombre', 'primerApellido', 'segundoApellido'].includes(campo)
+      ? capitalizarPrimeraLetra(valor)
+      : valor;
+    setFormData({ ...formData, [campo]: valorProcesado });
+  };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setCargando(true);
-  setMensaje('');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setCargando(true);
+    setMensaje('');
 
-  try {
-    const endpoint = modo === 'login' ? '/login' : '/registro';
-    const body = modo === 'login' 
-      ? { 
-          email: formData.email, 
-          password: formData.password,
-          recordarme: recordarme
-        }
-      : formData;
+    try {
+      const endpoint = modo === 'login' ? '/login' : '/registro';
+      const body = modo === 'login' 
+        ? { email: formData.email, password: formData.password, recordarme }
+        : formData;
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      const perfilResponse = await fetch(`${API_URL}/perfil`, {
-        headers: { 'Authorization': `Bearer ${data.token}` }
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       });
-      const perfilData = await perfilResponse.json();
-      
-      onLogin(data.token, perfilData);
-    } else {
-      // Manejar diferentes formatos de error
-      let mensajeError = '';
-      
-      if (typeof data.detail === 'string') {
-        // Error en formato string simple
-        mensajeError = data.detail;
-      } else if (Array.isArray(data.detail)) {
-        // Error de validación Pydantic (array de errores)
-        mensajeError = data.detail.map(error => {
-          // Personalizar el mensaje de error de email
-          if (error.msg && error.msg.includes('valid email address') || 
-              error.msg && error.msg.includes('email') ||
-              error.msg && error.msg.includes('@')) {
-            return 'Ingresa un correo electrónico válido';
-          }
-          return error.msg;
-        }).join(', ');
-      } else if (data.detail && typeof data.detail === 'object') {
-        // Error en formato objeto
-        mensajeError = data.detail.msg || 'Error de validación';
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const perfilResponse = await fetch(`${API_URL}/perfil`, {
+          headers: { 'Authorization': `Bearer ${data.token}` }
+        });
+        const perfilData = await perfilResponse.json();
+        onLogin(data.token, perfilData);
       } else {
-        // Formato desconocido
-        mensajeError = 'Error en el servidor';
+        setMensaje(manejarErrores(data));
       }
-      
-      setMensaje(mensajeError);
+    } catch (error) {
+      setMensaje('Error de conexión. Verifica que el backend esté corriendo.');
+    } finally {
+      setCargando(false);
     }
-  } catch (error) {
-    setMensaje('Error de conexión. Verifica que el backend esté corriendo.');
-  } finally {
-    setCargando(false);
-  }
-};
+  };
+
+  const camposRegistro = [
+    { name: 'nombre', placeholder: 'Nombre', required: true },
+    { name: 'primerApellido', placeholder: 'Primer Apellido', required: true },
+    { name: 'segundoApellido', placeholder: 'Segundo Apellido (Opcional)', required: false }
+  ];
 
   return (
     <div className="pantalla-auth">
       <div className="auth-container">
         <div className="auth-logo">
-          <img src="/Logo500pxV2.png" alt="Logo Sistema CSI" />
+          <img src="/LogoNeurometrica500px.png" alt="Logo NeuroMétrica" />
         </div>
         
         <h1>NeuroMétrica</h1>
@@ -222,42 +250,29 @@ const PantallaAuth = ({ onLogin }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
-          {modo === 'registro' && (
-            <>
-              <input
-                type="text"
-                placeholder="Nombre"
-                value={formData.nombre}
-                onChange={(e) => setFormData({...formData, nombre: capitalizarPrimeraLetra(e.target.value)})}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Primer Apellido"
-                value={formData.primerApellido}
-                onChange={(e) => setFormData({...formData, primerApellido: capitalizarPrimeraLetra(e.target.value)})}
-                required
-              />
-              <input
-                type="text"
-                placeholder="Segundo Apellido"
-                value={formData.segundoApellido}
-                onChange={(e) => setFormData({...formData, segundoApellido: capitalizarPrimeraLetra(e.target.value)})}
-              />
-            </>
-          )}
+          {modo === 'registro' && camposRegistro.map(campo => (
+            <input
+              key={campo.name}
+              type="text"
+              placeholder={campo.placeholder}
+              value={formData[campo.name]}
+              onChange={(e) => actualizarCampo(campo.name, e.target.value)}
+              required={campo.required}
+            />
+          ))}
+          
           <input
             type="email"
             placeholder="Correo electrónico"
             value={formData.email}
-            onChange={(e) => setFormData({...formData, email: e.target.value})}
+            onChange={(e) => actualizarCampo('email', e.target.value)}
             required
           />
           <input
             type="password"
             placeholder="Contraseña"
             value={formData.password}
-            onChange={(e) => setFormData({...formData, password: e.target.value})}
+            onChange={(e) => actualizarCampo('password', e.target.value)}
             required
             minLength="6"
           />
@@ -290,13 +305,29 @@ const PantallaAuth = ({ onLogin }) => {
 };
 
 // ============================================
-// PANTALLA PRINCIPAL
+// COMPONENTE: DASHBOARD
 // ============================================
 const PantallaDashboard = ({ onCambiarPagina, usuario }) => {
   const [infoExpandida, setInfoExpandida] = useState(false);
   const primerNombre = usuario?.nombre?.split(' ')[0] || '';
-  const nombreCapitalizado = primerNombre.charAt(0).toUpperCase() + primerNombre.slice(1);
+  const nombreCapitalizado = capitalizarPrimeraLetra(primerNombre);
 
+  const acciones = [
+    {
+      icono: '📝',
+      titulo: 'Realizar Nuevo Test',
+      descripcion: 'Tu perfil comienza aquí',
+      accion: () => onCambiarPagina('catalogo'),
+      textBoton: 'Comenzar Test'
+    },
+    {
+      icono: '📊',
+      titulo: 'Ver Historial',
+      descripcion: 'Consulta tus tests anteriores y resultados',
+      accion: () => onCambiarPagina('historial'),
+      textBoton: 'Ver Historial'
+    }
+  ];
 
   return (
     <div className="contenido-pagina">
@@ -306,23 +337,16 @@ const PantallaDashboard = ({ onCambiarPagina, usuario }) => {
       </p>
 
       <div className="cards-grid-acciones">
-        <div className="card-accion">
-          <div className="card-icono">📝</div>
-          <h3>Realizar Nuevo Test</h3>
-          <p>Tu perfil comienza aquí</p>
-          <button onClick={() => onCambiarPagina('catalogo')} className="btn-card">
-            Comenzar Test
-          </button>
-        </div>
-
-        <div className="card-accion">
-          <div className="card-icono">📊</div>
-          <h3>Ver Historial</h3>
-          <p>Consulta tus tests anteriores y resultados</p>
-          <button onClick={() => onCambiarPagina('historial')} className="btn-card">
-            Ver Historial
-          </button>
-        </div>
+        {acciones.map((accion, index) => (
+          <div key={index} className="card-accion">
+            <div className="card-icono">{accion.icono}</div>
+            <h3>{accion.titulo}</h3>
+            <p>{accion.descripcion}</p>
+            <button onClick={accion.accion} className="btn-card">
+              {accion.textBoton}
+            </button>
+          </div>
+        ))}
       </div>
 
       <div className="info-expandible">
@@ -350,6 +374,9 @@ const PantallaDashboard = ({ onCambiarPagina, usuario }) => {
   );
 };
 
+// ============================================
+// COMPONENTE: CATÁLOGO DE TESTS
+// ============================================
 const PantallaCatalogoTests = ({ onSeleccionarTest, onVolver }) => {
   const tests = [
     {
@@ -384,9 +411,7 @@ const PantallaCatalogoTests = ({ onSeleccionarTest, onVolver }) => {
   return (
     <div className="contenido-pagina">
       <h1>Catálogo de Evaluaciones</h1>
-      <p className="pagina-descripcion">
-        Selecciona el test que deseas realizar
-      </p>
+      <p className="pagina-descripcion">Selecciona el test que deseas realizar</p>
 
       <div className="catalogo-tests">
         {tests.map(test => (
@@ -401,18 +426,13 @@ const PantallaCatalogoTests = ({ onSeleccionarTest, onVolver }) => {
               <span>⏱️ {test.duracion}</span>
               <span>📊 {test.preguntas} preguntas</span>
             </div>
-            {test.disponible ? (
-              <button 
-                onClick={() => onSeleccionarTest(test.id)}
-                className="btn-card"
-              >
-                Iniciar Test
-              </button>
-            ) : (
-              <button className="btn-card btn-disabled" disabled>
-                Próximamente
-              </button>
-            )}
+            <button 
+              onClick={() => onSeleccionarTest(test.id)}
+              className={`btn-card ${!test.disponible ? 'btn-disabled' : ''}`}
+              disabled={!test.disponible}
+            >
+              {test.disponible ? 'Iniciar Test' : 'Próximamente'}
+            </button>
           </div>
         ))}
       </div>
@@ -424,6 +444,9 @@ const PantallaCatalogoTests = ({ onSeleccionarTest, onVolver }) => {
   );
 };
 
+// ============================================
+// COMPONENTE: TEST CSI
+// ============================================
 const PantallaTest = ({ token, onVolver, onTestCompletado }) => {
   const [paso, setPaso] = useState(1);
   const [situacion, setSituacion] = useState('');
@@ -501,9 +524,7 @@ const PantallaTest = ({ token, onVolver, onTestCompletado }) => {
         setTestId(data.test_id);
         setPaso(3);
         const respuestasIniciales = {};
-        for (let i = 1; i <= 40; i++) {
-          respuestasIniciales[i] = null;
-        }
+        preguntas.forEach((_, i) => respuestasIniciales[i + 1] = null);
         setRespuestas(respuestasIniciales);
       } else {
         setMensaje('❌ ' + data.detail);
@@ -517,6 +538,7 @@ const PantallaTest = ({ token, onVolver, onTestCompletado }) => {
 
   const finalizarTest = async () => {
     const todasRespondidas = Object.values(respuestas).every(r => r !== null);
+    
     if (!todasRespondidas) {
       setMensaje('❌ Por favor, responde todas las preguntas');
       window.scrollTo(0, 0);
@@ -539,7 +561,7 @@ const PantallaTest = ({ token, onVolver, onTestCompletado }) => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          respuestas: respuestas,
+          respuestas,
           capacidad_afrontamiento: capacidadAfrontamiento
         })
       });
@@ -558,6 +580,17 @@ const PantallaTest = ({ token, onVolver, onTestCompletado }) => {
     }
   };
 
+  const rellenarAleatorio = () => {
+  const respuestasAleatorias = {};
+  preguntas.forEach((_, i) => {
+    respuestasAleatorias[i + 1] = Math.floor(Math.random() * 5); // 0-4
+  });
+  setRespuestas(respuestasAleatorias);
+  setCapacidadAfrontamiento(Math.floor(Math.random() * 5)); // 0-4
+  setMensaje('✅ Respuestas rellenadas automáticamente');
+  };
+
+  // Paso 1: Instrucciones
   if (paso === 1) {
     return (
       <div className="pantalla pantalla-test">
@@ -600,6 +633,7 @@ const PantallaTest = ({ token, onVolver, onTestCompletado }) => {
     );
   }
 
+  // Paso 2: Descripción de situación
   if (paso === 2) {
     return (
       <div className="pantalla pantalla-test">
@@ -647,103 +681,111 @@ const PantallaTest = ({ token, onVolver, onTestCompletado }) => {
     );
   }
 
-  if (paso === 3) {
-    const preguntasRespondidas = Object.values(respuestas).filter(r => r !== null).length;
-    const progreso = (preguntasRespondidas / 40) * 100;
+  // Paso 3: Preguntas
+  const preguntasRespondidas = Object.values(respuestas).filter(r => r !== null).length;
+  const progreso = (preguntasRespondidas / 40) * 100;
 
-    return (
-      <div className="pantalla pantalla-test test-preguntas">
-        <h2>Responde las siguientes preguntas</h2>
-        
-        <div className="instrucciones-escala">
-          <p>
-            Basándote en la situación que describiste, indica el grado en que hiciste 
-            lo que cada frase indica:
-          </p>
-          <div className="escala-explicacion">
-            <span><strong>0</strong> = En absoluto</span>
-            <span><strong>1</strong> = Un poco</span>
-            <span><strong>2</strong> = Bastante</span>
-            <span><strong>3</strong> = Mucho</span>
-            <span><strong>4</strong> = Totalmente</span>
-          </div>
-        </div>
-
-        <div className="progreso-container">
-          <div className="progreso-barra">
-            <div className="progreso-fill" style={{ width: `${progreso}%` }}></div>
-          </div>
-          <p className="progreso-texto">
-            {preguntasRespondidas} de 40 preguntas respondidas
-          </p>
-        </div>
-
-        <div className="preguntas-lista">
-          {preguntas.map((pregunta, index) => {
-            const numero = index + 1;
-            return (
-              <div key={numero} className="pregunta-item">
-                <div className="pregunta-header">
-                  <span className="pregunta-numero">{numero}.</span>
-                  <span className="pregunta-texto">{pregunta}</span>
-                </div>
-                <div className="pregunta-opciones">
-                  {[0, 1, 2, 3, 4].map(valor => (
-                    <label key={valor} className="opcion-radio">
-                      <input
-                        type="radio"
-                        name={`pregunta-${numero}`}
-                        value={valor}
-                        checked={respuestas[numero] === valor}
-                        onChange={() => setRespuestas({...respuestas, [numero]: valor})}
-                      />
-                      <span className="opcion-label">{valor}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="pregunta-item pregunta-especial">
-          <div className="pregunta-header">
-            <span className="pregunta-texto">
-              <strong>Me consideré capaz de afrontar la situación</strong>
-            </span>
-          </div>
-          <div className="pregunta-opciones">
-            {[0, 1, 2, 3, 4].map(valor => (
-              <label key={valor} className="opcion-radio">
-                <input
-                  type="radio"
-                  name="capacidad-afrontamiento"
-                  value={valor}
-                  checked={capacidadAfrontamiento === valor}
-                  onChange={() => setCapacidadAfrontamiento(valor)}
-                />
-                <span className="opcion-label">{valor}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {mensaje && <p className="mensaje">{mensaje}</p>}
-
-        <div className="botones">
-          <button 
-            onClick={finalizarTest} 
-            className="btn-primary btn-grande"
-            disabled={cargando}
-          >
-            {cargando ? 'Procesando...' : 'Finalizar Test'}
-          </button>
+  return (
+    <div className="pantalla pantalla-test test-preguntas">
+      <h2>Responde las siguientes preguntas</h2>
+      
+      <div className="instrucciones-escala">
+        <p>
+          Basándote en la situación que describiste, indica el grado en que hiciste 
+          lo que cada frase indica:
+        </p>
+        <div className="escala-explicacion">
+          {['En absoluto', 'Un poco', 'Bastante', 'Mucho', 'Totalmente'].map((texto, i) => (
+            <span key={i}><strong>{i}</strong> = {texto}</span>
+          ))}
         </div>
       </div>
-    );
-  }
+
+      <div className="progreso-container">
+        <div className="progreso-barra">
+          <div className="progreso-fill" style={{ width: `${progreso}%` }}></div>
+        </div>
+        <p className="progreso-texto">
+          {preguntasRespondidas} de 40 preguntas respondidas
+        </p>
+        {/* Botón para rellenar las respuestas de manera aleatoria para agilizar la muestra del funcionamiento */}
+        <button 
+          onClick={rellenarAleatorio}
+          className="btn-secondary"
+          style={{ marginTop: '15px', width: '100%' }}
+        >
+          🎲 Rellenar Aleatoriamente (Modo Prueba)
+        </button>
+      </div>
+
+      <div className="preguntas-lista">
+        {preguntas.map((pregunta, index) => {
+          const numero = index + 1;
+          return (
+            <div key={numero} className="pregunta-item">
+              <div className="pregunta-header">
+                <span className="pregunta-numero">{numero}.</span>
+                <span className="pregunta-texto">{pregunta}</span>
+              </div>
+              <div className="pregunta-opciones">
+                {[0, 1, 2, 3, 4].map(valor => (
+                  <label key={valor} className="opcion-radio">
+                    <input
+                      type="radio"
+                      name={`pregunta-${numero}`}
+                      value={valor}
+                      checked={respuestas[numero] === valor}
+                      onChange={() => setRespuestas({...respuestas, [numero]: valor})}
+                    />
+                    <span className="opcion-label">{valor}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="pregunta-item pregunta-especial">
+        <div className="pregunta-header">
+          <span className="pregunta-texto">
+            <strong>Me consideré capaz de afrontar la situación</strong>
+          </span>
+        </div>
+        <div className="pregunta-opciones">
+          {[0, 1, 2, 3, 4].map(valor => (
+            <label key={valor} className="opcion-radio">
+              <input
+                type="radio"
+                name="capacidad-afrontamiento"
+                value={valor}
+                checked={capacidadAfrontamiento === valor}
+                onChange={() => setCapacidadAfrontamiento(valor)}
+              />
+              <span className="opcion-label">{valor}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {mensaje && <p className="mensaje">{mensaje}</p>}
+
+      <div className="botones">
+        <button 
+          onClick={finalizarTest} 
+          className="btn-primary btn-grande"
+          disabled={cargando}
+        >
+          {cargando ? 'Procesando...' : 'Finalizar Test'}
+        </button>
+      </div>
+    </div>
+  );
 };
 
+// ============================================
+// COMPONENTE: RESULTADOS
+// ============================================
 const PantallaResultados = ({ token, testId, onVolver }) => {
   const [resultados, setResultados] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -797,9 +839,7 @@ const PantallaResultados = ({ token, testId, onVolver }) => {
   }
 
   const { resultados: res } = resultados;
-  const niveles = res.levels;
-  const interpretaciones = res.interpretations;
-  const percentiles = res.percentiles;
+  const { levels: niveles, interpretations: interpretaciones, percentiles } = res;
 
   const indicadoresInfo = {
     'REP': { nombre: 'Resolución de Problemas', color: '#4caf50' },
@@ -812,11 +852,13 @@ const PantallaResultados = ({ token, testId, onVolver }) => {
     'RES': { nombre: 'Retirada Social', color: '#795548' }
   };
 
+  const capacidadTexto = ['nada', 'poco', 'moderadamente', 'muy', 'totalmente'];
+
   return (
     <div className="pantalla pantalla-resultados">
       <h1>Resultados de tu Test CSI</h1>
       <p className="fecha-test">
-        Completado el {new Date(resultados.fecha_completado).toLocaleDateString('es-MX', {
+        Completado el {formatearFecha(resultados.fecha_completado, {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
@@ -829,18 +871,14 @@ const PantallaResultados = ({ token, testId, onVolver }) => {
       <div className="resumen-general">
         <h2>Resumen General</h2>
         <div className="resumen-stats">
-          <div className="stat-card">
-            <span className="stat-numero">{res.summary.high_count}</span>
-            <span className="stat-label">Indicadores Altos</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-numero">{res.summary.medium_count}</span>
-            <span className="stat-label">Indicadores Medios</span>
-          </div>
-          <div className="stat-card">
-            <span className="stat-numero">{res.summary.low_count}</span>
-            <span className="stat-label">Indicadores Bajos</span>
-          </div>
+          {['high', 'medium', 'low'].map((level, i) => (
+            <div key={level} className="stat-card">
+              <span className="stat-numero">{res.summary[`${level}_count`]}</span>
+              <span className="stat-label">
+                Indicadores {['Altos', 'Medios', 'Bajos'][i]}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -848,32 +886,27 @@ const PantallaResultados = ({ token, testId, onVolver }) => {
       <div className="seccion-grafica">
         <h2>Tus Estrategias de Afrontamiento</h2>
         <div className="grafica-barras">
-          {Object.entries(indicadoresInfo).map(([codigo, info]) => {
-            const percentil = percentiles[codigo];
-            const nivel = niveles[codigo];
-            
-            return (
-              <div key={codigo} className="barra-container">
-                <div className="barra-label">
-                  <span className="barra-nombre">{info.nombre}</span>
-                  <span className={`barra-nivel nivel-${nivel.toLowerCase()}`}>
-                    {nivel}
-                  </span>
-                </div>
-                <div className="barra-fondo">
-                  <div 
-                    className="barra-fill"
-                    style={{ 
-                      width: `${percentil}%`,
-                      backgroundColor: info.color
-                    }}
-                  >
-                    <span className="barra-percentil">{percentil}</span>
-                  </div>
+          {Object.entries(indicadoresInfo).map(([codigo, info]) => (
+            <div key={codigo} className="barra-container">
+              <div className="barra-label">
+                <span className="barra-nombre">{info.nombre}</span>
+                <span className={`barra-nivel nivel-${niveles[codigo].toLowerCase()}`}>
+                  {niveles[codigo]}
+                </span>
+              </div>
+              <div className="barra-fondo">
+                <div 
+                  className="barra-fill"
+                  style={{ 
+                    width: `${percentiles[codigo]}%`,
+                    backgroundColor: info.color
+                  }}
+                >
+                  <span className="barra-percentil">{percentiles[codigo]}</span>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
         <div className="leyenda-grafica">
           <span>0 (Bajo)</span>
@@ -930,13 +963,7 @@ const PantallaResultados = ({ token, testId, onVolver }) => {
             </div>
           </div>
           <p className="capacidad-resultado">
-            Te consideraste <strong>
-              {resultados.capacidad_afrontamiento === 0 && 'nada'}
-              {resultados.capacidad_afrontamiento === 1 && 'poco'}
-              {resultados.capacidad_afrontamiento === 2 && 'moderadamente'}
-              {resultados.capacidad_afrontamiento === 3 && 'muy'}
-              {resultados.capacidad_afrontamiento === 4 && 'totalmente'}
-            </strong> capaz de afrontar la situación.
+            Te consideraste <strong>{capacidadTexto[resultados.capacidad_afrontamiento]}</strong> capaz de afrontar la situación.
           </p>
         </div>
       )}
@@ -954,10 +981,7 @@ const PantallaResultados = ({ token, testId, onVolver }) => {
         <button onClick={onVolver} className="btn-primary">
           Volver a Inicio
         </button>
-        <button 
-          onClick={() => window.print()} 
-          className="btn-secondary"
-        >
+        <button onClick={() => window.print()} className="btn-secondary">
           Imprimir Resultados
         </button>
       </div>
@@ -965,7 +989,10 @@ const PantallaResultados = ({ token, testId, onVolver }) => {
   );
 };
 
-const PantallaHistorial = ({ token, onVolver, onVerResultado }) => {
+// ============================================
+// COMPONENTE: HISTORIAL
+// ============================================
+const PantallaHistorial = ({ token, onVolver, onVerResultado, onIrACatalogo }) => {
   const [tests, setTests] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
@@ -1026,7 +1053,7 @@ const PantallaHistorial = ({ token, onVolver, onVerResultado }) => {
           <div className="icono-vacio">📋</div>
           <h3>No tienes tests realizados</h3>
           <p>Realiza un test para empezar a construir tu perfil psicológico.</p>
-          <button onClick={onVolver} className="btn-primary">
+          <button onClick={onIrACatalogo} className="btn-primary">
             Realizar Test
           </button>
         </div>
@@ -1037,61 +1064,59 @@ const PantallaHistorial = ({ token, onVolver, onVerResultado }) => {
           </p>
 
           <div className="tests-lista">
-            {tests.map((test) => {
-              const fecha = new Date(test.fecha_inicio);
-              const fechaFormateada = fecha.toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              });
-              const horaFormateada = fecha.toLocaleTimeString('es-MX', {
-                hour: '2-digit',
-                minute: '2-digit'
-              });
-
-              return (
-                <div key={test.test_id} className="test-card">
-                  <div className="test-card-header">
-                    <div className="test-fecha">
-                      <span className="fecha-dia">{fechaFormateada}</span>
-                      <span className="fecha-hora">{horaFormateada}</span>
-                    </div>
-                    <div className={`test-estado ${test.completado ? 'completado' : 'pendiente'}`}>
-                      {test.completado ? 'Completado' : 'En progreso'}
-                    </div>
+            {tests.map((test) => (
+              <div key={test.test_id} className="test-card">
+                <div className="test-card-header">
+                  <div className="test-fecha">
+                    <span className="fecha-dia">
+                      {formatearFecha(test.fecha_inicio, {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                    <span className="fecha-hora">
+                      {formatearFecha(test.fecha_inicio, {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
                   </div>
-
-                  <div className="test-card-body">
-                    {test.completado ? (
-                      <>
-                        <p className="test-completado-texto">
-                          Test completado el {new Date(test.fecha_completado).toLocaleDateString('es-MX', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric'
-                          })}
-                        </p>
-                        <button 
-                          onClick={() => onVerResultado(test.test_id)}
-                          className="btn-primary btn-small"
-                        >
-                          Ver Resultados
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <p className="test-pendiente-texto">
-                          Test iniciado pero no completado
-                        </p>
-                        <button className="btn-secondary btn-small" disabled>
-                          Incompleto
-                        </button>
-                      </>
-                    )}
+                  <div className={`test-estado ${test.completado ? 'completado' : 'pendiente'}`}>
+                    {test.completado ? 'Completado' : 'En progreso'}
                   </div>
                 </div>
-              );
-            })}
+
+                <div className="test-card-body">
+                  {test.completado ? (
+                    <>
+                      <p className="test-completado-texto">
+                        Test completado el {formatearFecha(test.fecha_completado, {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </p>
+                      <button 
+                        onClick={() => onVerResultado(test.test_id)}
+                        className="btn-primary btn-small"
+                      >
+                        Ver Resultados
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="test-pendiente-texto">
+                        Test iniciado pero no completado
+                      </p>
+                      <button className="btn-secondary btn-small" disabled>
+                        Incompleto
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </>
       )}
@@ -1103,6 +1128,9 @@ const PantallaHistorial = ({ token, onVolver, onVerResultado }) => {
   );
 };
 
+// ============================================
+// COMPONENTE: PERFIL
+// ============================================
 const PantallaPerfil = ({ usuario, token }) => {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [modoPassword, setModoPassword] = useState(false);
@@ -1118,35 +1146,39 @@ const PantallaPerfil = ({ usuario, token }) => {
   const [mensaje, setMensaje] = useState('');
   const [cargando, setCargando] = useState(false);
 
-  const handleGuardarPerfil = async () => {
+  const realizarPeticion = async (url, body) => {
     setCargando(true);
     setMensaje('');
 
     try {
-      const response = await fetch(`${API_URL}/perfil/actualizar`, {
+      const response = await fetch(`${API_URL}${url}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(datosEdicion)
+        body: JSON.stringify(body)
       });
 
       const data = await response.json();
-
-      if (response.ok) {
-        setMensaje('✅ ' + data.mensaje);
-        setModoEdicion(false);
-        // Actualizar datos locales
-        usuario.nombre = datosEdicion.nombre;
-        usuario.telefono = datosEdicion.telefono;
-      } else {
-        setMensaje('❌ ' + data.detail);
-      }
+      return { ok: response.ok, data };
     } catch (error) {
-      setMensaje('❌ Error de conexión');
+      return { ok: false, data: { detail: 'Error de conexión' } };
     } finally {
       setCargando(false);
+    }
+  };
+
+  const handleGuardarPerfil = async () => {
+    const { ok, data } = await realizarPeticion('/perfil/actualizar', datosEdicion);
+
+    if (ok) {
+      setMensaje('✅ ' + data.mensaje);
+      setModoEdicion(false);
+      usuario.nombre = datosEdicion.nombre;
+      usuario.telefono = datosEdicion.telefono;
+    } else {
+      setMensaje('❌ ' + data.detail);
     }
   };
 
@@ -1161,35 +1193,17 @@ const PantallaPerfil = ({ usuario, token }) => {
       return;
     }
 
-    setCargando(true);
-    setMensaje('');
+    const { ok, data } = await realizarPeticion('/perfil/cambiar-password', {
+      password_actual: passwordData.actual,
+      password_nueva: passwordData.nueva
+    });
 
-    try {
-      const response = await fetch(`${API_URL}/perfil/cambiar-password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          password_actual: passwordData.actual,
-          password_nueva: passwordData.nueva
-        })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMensaje('✅ ' + data.mensaje);
-        setModoPassword(false);
-        setPasswordData({ actual: '', nueva: '', confirmar: '' });
-      } else {
-        setMensaje('❌ ' + data.detail);
-      }
-    } catch (error) {
-      setMensaje('❌ Error de conexión');
-    } finally {
-      setCargando(false);
+    if (ok) {
+      setMensaje('✅ ' + data.mensaje);
+      setModoPassword(false);
+      setPasswordData({ actual: '', nueva: '', confirmar: '' });
+    } else {
+      setMensaje('❌ ' + data.detail);
     }
   };
 
@@ -1256,29 +1270,30 @@ const PantallaPerfil = ({ usuario, token }) => {
           </button>
         ) : (
           <div className="perfil-form">
-            <input
-              type="password"
-              placeholder="Contraseña actual"
-              value={passwordData.actual}
-              onChange={(e) => setPasswordData({...passwordData, actual: e.target.value})}
-            />
-            <input
-              type="password"
-              placeholder="Nueva contraseña"
-              value={passwordData.nueva}
-              onChange={(e) => setPasswordData({...passwordData, nueva: e.target.value})}
-            />
-            <input
-              type="password"
-              placeholder="Confirmar nueva contraseña"
-              value={passwordData.confirmar}
-              onChange={(e) => setPasswordData({...passwordData, confirmar: e.target.value})}
-            />
+            {['actual', 'nueva', 'confirmar'].map((campo) => (
+              <input
+                key={campo}
+                type="password"
+                placeholder={
+                  campo === 'actual' ? 'Contraseña actual' :
+                  campo === 'nueva' ? 'Nueva contraseña' :
+                  'Confirmar nueva contraseña'
+                }
+                value={passwordData[campo]}
+                onChange={(e) => setPasswordData({...passwordData, [campo]: e.target.value})}
+              />
+            ))}
             <div className="perfil-botones">
               <button onClick={handleCambiarPassword} disabled={cargando} className="btn-primary">
                 {cargando ? 'Cambiando...' : 'Cambiar Contraseña'}
               </button>
-              <button onClick={() => { setModoPassword(false); setPasswordData({actual: '', nueva: '', confirmar: ''}); }} className="btn-secondary">
+              <button 
+                onClick={() => { 
+                  setModoPassword(false); 
+                  setPasswordData({actual: '', nueva: '', confirmar: ''}); 
+                }} 
+                className="btn-secondary"
+              >
                 Cancelar
               </button>
             </div>
@@ -1313,70 +1328,35 @@ function App() {
     setPaginaActual('dashboard');
   };
 
-  // Si no está autenticado, mostrar login
+  const navegarConTest = (pagina, testId = null) => {
+    setPaginaActual(pagina);
+    if (testId) setTestIdActual(testId);
+  };
+
   if (!autenticado) {
     return <PantallaAuth onLogin={handleLogin} />;
   }
 
-  // Si está autenticado, mostrar layout profesional
+  const renderizarPagina = () => {
+    const paginas = {
+      dashboard: <PantallaDashboard onCambiarPagina={setPaginaActual} usuario={usuario} />,
+      catalogo: <PantallaCatalogoTests onSeleccionarTest={(id) => id === 'csi' && setPaginaActual('test')} onVolver={() => setPaginaActual('dashboard')} />,
+      test: <PantallaTest token={token} onVolver={() => setPaginaActual('dashboard')} onTestCompletado={(id) => navegarConTest('resultados', id)} />,
+      resultados: <PantallaResultados token={token} testId={testIdActual} onVolver={() => setPaginaActual('dashboard')} />,
+      historial: <PantallaHistorial token={token} onVolver={() => setPaginaActual('dashboard')} onVerResultado={(id) => navegarConTest('resultados', id)} onIrACatalogo={() => setPaginaActual('catalogo')} />,
+      perfil: <PantallaPerfil usuario={usuario} token={token} />
+    };
+
+    return paginas[paginaActual] || paginas.dashboard;
+  };
+
   return (
     <LayoutProfesional
       usuario={usuario}
       onCerrarSesion={handleCerrarSesion}
-      paginaActual={paginaActual}
       onCambiarPagina={setPaginaActual}
     >
-      {paginaActual === 'dashboard' && (
-        <PantallaDashboard 
-          onCambiarPagina={setPaginaActual}
-          usuario={usuario}
-        />
-      )}
-      
-      {paginaActual === 'catalogo' && (
-        <PantallaCatalogoTests
-          onSeleccionarTest={(testId) => {
-            if (testId === 'csi') {
-              setPaginaActual('test');
-            }
-          }}
-          onVolver={() => setPaginaActual('dashboard')}
-        />
-      )}
-
-      {paginaActual === 'test' && (
-        <PantallaTest
-          token={token}
-          onVolver={() => setPaginaActual('dashboard')}
-          onTestCompletado={(testId) => {
-            setTestIdActual(testId);
-            setPaginaActual('resultados');
-          }}
-        />
-      )}
-
-      {paginaActual === 'resultados' && (
-        <PantallaResultados
-          token={token}
-          testId={testIdActual}
-          onVolver={() => setPaginaActual('dashboard')}
-        />
-      )}
-
-      {paginaActual === 'historial' && (
-        <PantallaHistorial
-          token={token}
-          onVolver={() => setPaginaActual('dashboard')}
-          onVerResultado={(testId) => {
-            setTestIdActual(testId);
-            setPaginaActual('resultados');
-          }}
-        />
-      )}
-
-      {paginaActual === 'perfil' && (
-        <PantallaPerfil usuario={usuario} token={token} />
-      )}
+      {renderizarPagina()}
     </LayoutProfesional>
   );
 }
