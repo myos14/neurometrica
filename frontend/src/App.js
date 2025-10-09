@@ -54,10 +54,11 @@ const LayoutProfesional = ({ children, usuario, onCerrarSesion, onCambiarPagina 
   };
 
   const opcionesMenu = [
-    { id: 'dashboard', icono: '🏠', texto: 'Inicio' },
-    { id: 'directorio', icono: '🔍', texto: 'Directorio de Psicólogos' },
-    { id: 'empresa', icono: '🏢', texto: 'Regístrate como Empresa' },
-    { id: 'cursos', icono: '📚', texto: 'Cursos' }
+    { id: 'dashboard', texto: 'Inicio' },
+    { id: 'directorio', texto: 'Directorio de psicólogos' },
+    { id: 'empresa', texto: 'Regístrate como empresa' },
+    { id: 'cursos', texto: 'Cursos' },
+    { id: 'articulos', texto: 'Artículos' }
   ];
 
   return (
@@ -107,10 +108,10 @@ const LayoutProfesional = ({ children, usuario, onCerrarSesion, onCambiarPagina 
           {perfilMenuAbierto && (
             <div className="perfil-dropdown-menu">
               <button onClick={() => navegarA('perfil')}>
-                <span>👤</span> Mi Perfil
+                Mi Perfil
               </button>
               <button onClick={onCerrarSesion}>
-                <span>🚪</span> Cerrar Sesión
+                Cerrar Sesión
               </button>
             </div>
           )}
